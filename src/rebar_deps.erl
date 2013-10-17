@@ -480,26 +480,37 @@ use_source(Config, Dep, Count) ->
         false ->
             require_source_engine(Dep#dep.source),
             {true, TargetDir} = get_deps_dir(Config, Dep#dep.app),
-            {true, TargetUrl} = determine_protocol(Config, Dep#dep.source),
+            {true, TargetUrl} = set_protocol(Config, Dep#dep.source),
             ?CONSOLE("Pulling ~p from ~p\n", [Dep#dep.app, TargetUrl]),
             download_source(TargetDir, TargetUrl),
             use_source(Config, Dep#dep { dir = TargetDir }, Count-1)
     end.
-git(Protocol, Url) -> 
-    re:replace(re:replace(Url, "^.[^:]*",Protocol,[{return,list}]), ".git$", "",[{return,list}]).
-determine_protocol({"default", Source}) ->
+
+set_protocol(bzr, "ssh", Url) -> 
+    re:replace(Url, "^.[^:]*","bzr+ssh",[{return,list}]);
+set_protocol(bzr, Protocol, Url) -> 
+    re:replace(Url, "^.[^:]*",Protocol,[{return,list}]);
+set_protocol(git, Protocol, Url) -> 
+    re:replace(re:replace(Url, "^.[^:]*",Protocol,[{return,list}]), ".git$", "",[{return,list}]);
+set_protocol(hg, Protocol, Url) -> 
+    re:replace(Url, "^.[^:]*",Protocol,[{return,list}]);
+set_protocol(svn, "ssh", Url) -> 
+    re:replace(Url, "^.[^:]*","svn+ssh",[{return,list}]);
+set_protocol(svn, Protocol, Url) -> 
+    re:replace(Url, "^.[^:]*",Protocol,[{return,list}]).
+
+set_protocol({"default", Source}) ->
     {true, Source};
-determine_protocol({Protocol, {git, Url}}) ->
-    {true, {git, git(Protocol, Url)}};
-determine_protocol({Protocol, {git, Url, Tag}}) ->
-    {true, {git, git(Protocol, Url), Tag}};
-determine_protocol({_, Source}) ->
-    ?ABORT("force protocol for ~p\n not yet implemented", [element(1,Source)]).
-determine_protocol(Config, Source) ->
-    Protocol = rebar_config:get_global(Config, protocol, "default"),
+set_protocol({Protocol, {Cvs, Url}}) ->
+    {true, {Cvs, set_protocol(Cvs, Protocol, Url)}};
+set_protocol({Protocol, {Cvs, Url, Tag}}) ->
+    {true, {Cvs, set_protocol(Cvs, Protocol, Url), Tag}}.
+
+set_protocol(Config, Source) ->
+    Protocol = rebar_config:get_global(Config, force_protocol, "default"),
     case lists:member(list_to_atom(Protocol), [default, http, https, ssh]) of
-        true -> determine_protocol({Protocol, Source});
-        false -> ?ABORT("~p not valid protocol\n", [Protocol])
+        true -> set_protocol({Protocol, Source});
+        false -> ?ABORT("~p invalid option\n", [Protocol])
     end.
 
 download_source(AppDir, {hg, Url, Rev}) ->

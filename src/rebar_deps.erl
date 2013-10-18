@@ -488,7 +488,7 @@ use_source(Config, Dep, Count) ->
 
 set_protocol(bzr, "ssh", Url) -> 
     re:replace(Url, "^.[^:]*","bzr+ssh",[{return,list}]);
-set_protocol(fossil, _, Url) -> 
+set_protocol(fossil, _Protocol, Url) -> 
     Url;
 set_protocol(git, Protocol, Url) -> 
     re:replace(re:replace(Url, "^.[^:]*",Protocol,[{return,list}]), ".git$", "",[{return,list}]);

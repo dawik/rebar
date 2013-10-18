@@ -488,15 +488,15 @@ use_source(Config, Dep, Count) ->
 
 set_protocol(bzr, "ssh", Url) -> 
     re:replace(Url, "^.[^:]*","bzr+ssh",[{return,list}]);
-set_protocol(bzr, Protocol, Url) -> 
-    re:replace(Url, "^.[^:]*",Protocol,[{return,list}]);
+set_protocol(fossil, _, Url) -> 
+    Url;
 set_protocol(git, Protocol, Url) -> 
     re:replace(re:replace(Url, "^.[^:]*",Protocol,[{return,list}]), ".git$", "",[{return,list}]);
-set_protocol(hg, Protocol, Url) -> 
-    re:replace(Url, "^.[^:]*",Protocol,[{return,list}]);
+set_protocol(rsync, _Protocol, Url) -> 
+    Url;
 set_protocol(svn, "ssh", Url) -> 
     re:replace(Url, "^.[^:]*","svn+ssh",[{return,list}]);
-set_protocol(svn, Protocol, Url) -> 
+set_protocol(_Cvs, Protocol, Url) -> 
     re:replace(Url, "^.[^:]*",Protocol,[{return,list}]).
 
 set_protocol({"default", Source}) ->
